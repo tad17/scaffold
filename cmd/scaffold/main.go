@@ -1,0 +1,8 @@
+
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("scaffold: project generator")
+}
