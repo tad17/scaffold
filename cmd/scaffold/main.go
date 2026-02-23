@@ -1,8 +1,26 @@
-
 package main
 
-import "fmt"
+import (
+    "scaffold/internal/ops"
+)
 
 func main() {
-    fmt.Println("scaffold: project generator")
+
+    executor := ops.Executor{
+        DryRun: false,
+    }
+
+    operations := []ops.Operation{
+        ops.MkdirOp{
+            Path: "test-output",
+        },
+        ops.WriteFileOp{
+            Path: "test-output/hello.txt",
+            Content: []byte("hello scaffold\n"),
+        },
+    }
+
+    if err := executor.Apply(operations); err != nil {
+        panic(err)
+    }
 }
