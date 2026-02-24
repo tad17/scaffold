@@ -1,40 +1,34 @@
 package main
 
 import (
-    "scaffold/internal/ast"
+    "scaffold/internal/config"
     "scaffold/internal/engine"
     "scaffold/internal/ops"
 )
 
 func main() {
 
-    // --- registry функций ---
+    cfg, err := config.Load("example.yaml")
+    if err != nil {
+        panic(err)
+    }
+
+    templates := config.BuildTemplateStore(cfg)
+
     registry := engine.NewFunctionRegistry()
     engine.RegisterBuiltins(registry)
 
-    // --- store шаблонов ---
-    templates := engine.NewTemplateStore()
-
-    templates.Register("content",
-        ast.TextNode{Value: "This is included content\n"},
-    )
-
-    // --- engine ---
     eng := engine.Engine{
         Functions: registry,
         Templates: templates,
     }
 
-    // --- root AST ---
-    root := ast.SequenceNode{
-        Items: []ast.Node{
-            ast.CallNode{Func: "header"},
-            ast.IncludeNode{Target: "content"},
-            ast.CallNode{Func: "footer"},
-        },
+    root, ok := templates.Get("main")
+    if !ok {
+        panic("template main not found")
     }
 
-    operations, err := eng.Evaluate(root, "test-output/include.txt")
+    operations, err := eng.Evaluate(root, "test-output/yaml.txt")
     if err != nil {
         panic(err)
     }

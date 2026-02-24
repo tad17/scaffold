@@ -1,0 +1,4 @@
+=== HEADER ===
+Generated from YAML!
+
+=== FOOTER ===

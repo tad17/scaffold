@@ -1,0 +1,7 @@
+
+templates:
+  main:
+    - "<- header()"
+    - "Generated from YAML!"
+    - "<- footer()"
+    
