@@ -8,6 +8,7 @@ import (
 )
 
 type Engine struct {
+    Functions *FunctionRegistry
 }
 
 // Evaluate — главная точка входа.
@@ -58,8 +59,23 @@ func (e *Engine) walk(node ast.Node, out *bytes.Buffer) error {
         return fmt.Errorf("include not implemented yet")
 
     case ast.CallNode:
-        return fmt.Errorf("call not implemented yet")
 
+        if e.Functions == nil {
+            return fmt.Errorf("no function registry configured")
+        }
+
+        fn, ok := e.Functions.Get(v.Func)
+        if !ok {
+            return fmt.Errorf("unknown function %s", v.Func)
+        }
+
+        result, err := fn(v.Args)
+        if err != nil {
+            return err
+        }
+
+        return e.walk(result, out)
+    
     default:
         return fmt.Errorf("unknown node type %T", node)
     }

@@ -8,25 +8,25 @@ import (
 
 func main() {
 
-    // --- создаём AST вручную ---
+    registry := engine.NewFunctionRegistry()
+    engine.RegisterBuiltins(registry)
+
+    eng := engine.Engine{
+        Functions: registry,
+    }
 
     root := ast.SequenceNode{
         Items: []ast.Node{
-            ast.TextNode{Value: "Hello from scaffold\n"},
-            ast.TextNode{Value: "Engine works\n"},
+            ast.CallNode{Func: "header"},
+            ast.TextNode{Value: "Body content\n"},
+            ast.CallNode{Func: "footer"},
         },
     }
 
-    // --- запускаем engine ---
-
-    eng := engine.Engine{}
-
-    operations, err := eng.Evaluate(root, "test-output/engine.txt")
+    operations, err := eng.Evaluate(root, "test-output/functions.txt")
     if err != nil {
         panic(err)
     }
-
-    // --- выполняем операции ---
 
     executor := ops.Executor{}
     if err := executor.Apply(operations); err != nil {
