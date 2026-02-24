@@ -9,6 +9,7 @@ import (
 
 type Engine struct {
     Functions *FunctionRegistry
+    Templates *TemplateStore
 }
 
 // Evaluate — главная точка входа.
@@ -56,8 +57,18 @@ func (e *Engine) walk(node ast.Node, out *bytes.Buffer) error {
         return nil
 
     case ast.IncludeNode:
-        return fmt.Errorf("include not implemented yet")
 
+        if e.Templates == nil {
+            return fmt.Errorf("no template store configured")
+        }
+
+        tmpl, ok := e.Templates.Get(v.Target)
+        if !ok {
+            return fmt.Errorf("unknown template %s", v.Target)
+        }
+
+        return e.walk(tmpl, out)
+    
     case ast.CallNode:
 
         if e.Functions == nil {

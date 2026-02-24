@@ -1,0 +1,4 @@
+=== HEADER ===
+This is included content
+
+=== FOOTER ===
