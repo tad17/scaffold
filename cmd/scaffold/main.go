@@ -1,12 +1,15 @@
 package main
 
 import (
+    "scaffold/internal/logx"
     "scaffold/internal/config"
     "scaffold/internal/engine"
     "scaffold/internal/ops"
 )
 
 func main() {
+
+    logx.DebugEnabled = true // временно всегда включено
 
     cfg, err := config.Load("example.yaml")
     if err != nil {

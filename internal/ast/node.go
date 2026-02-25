@@ -5,6 +5,12 @@ type Node interface {
     isNode()
 }
 
+type TemplateHeaderNode struct {
+    Name string
+}
+
+func (TemplateHeaderNode) isNode() {}
+
 // --------------------
 // Literal text
 // --------------------

@@ -1,7 +1,6 @@
-
 templates:
   main:
-    - "<- header()"
-    - "Generated from YAML!"
-    - "<- footer()"
+    - <- header("Test project")
+    - "Generated with arguments!"
+    - <- footer()
     

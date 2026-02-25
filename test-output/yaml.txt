@@ -1,4 +1,4 @@
-=== HEADER ===
-Generated from YAML!
+=== Test project ===
+Generated with arguments!
 
 === FOOTER ===
