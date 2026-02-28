@@ -9,7 +9,7 @@ type ExecError struct {
 }
 
 func (e ExecError) Error() string {
-    return fmt.Sprintf("%s %s \n<- %v", e.Op, e.Name, e.Err)
+    return fmt.Sprintf("%s %s: %v", e.Op, e.Name, e.Err)
 }
 
 func (e ExecError) Unwrap() error {

@@ -2,7 +2,7 @@ package dsl
 
 import (
     "strings"
-    "errors"
+    // "errors"
     "scaffold/internal/engine"
     "scaffold/internal/logx"
     "scaffold/internal/ast"
@@ -76,12 +76,14 @@ func parseCall(s string) (string, []ast.Value, error) {
         values = append(values, parseValue(p))
     }
 
+    /*
     err := engine.ExecError{
                 Op: "func",
                 Name: "parseCall",
                 Err: errors.New("ошибка для проверки"),
             }
-    return name, values, err
+    */
+    return name, values, nil
 }
 
 func splitArgs(s string) []string {

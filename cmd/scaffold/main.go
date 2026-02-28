@@ -21,6 +21,20 @@ func main() {
         panic(err)
     }
 
+    // ===============================
+    // 🔴 ВСТАВИТЬ СЮДА
+    // ===============================
+
+    graph := engine.BuildDependencyGraph(templates)
+
+    if err := graph.DetectCycles(); err != nil {
+        panic(err)
+    }
+
+    // ===============================
+    // дальше всё как было
+    // ===============================
+
     registry := engine.NewFunctionRegistry()
     engine.RegisterBuiltins(registry)
 
