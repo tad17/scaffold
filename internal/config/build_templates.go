@@ -7,7 +7,7 @@ import (
     "scaffold/internal/engine"
 )
 
-func BuildTemplateStore(cfg *Config) *engine.TemplateStore {
+func BuildTemplateStore(cfg *Config) (*engine.TemplateStore, error) {
 
     store := engine.NewTemplateStore()
 
@@ -16,7 +16,15 @@ func BuildTemplateStore(cfg *Config) *engine.TemplateStore {
         var nodes []ast.Node
 
         for _, line := range lines {
-            nodes = append(nodes, dsl.ParseLine(line))
+            node, err := dsl.ParseLine(line)
+            if err != nil {
+                return nil, engine.ExecError{
+                    Op: "function",
+                    Name: "BuildTemplateStore",
+                    Err: err,
+                }
+            }
+            nodes = append(nodes, node)
         }
 
         store.Register(name, ast.SequenceNode{
@@ -24,6 +32,6 @@ func BuildTemplateStore(cfg *Config) *engine.TemplateStore {
         })
     }
 
-    return store
+    return store, nil
 }
 

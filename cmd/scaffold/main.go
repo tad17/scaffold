@@ -16,7 +16,10 @@ func main() {
         panic(err)
     }
 
-    templates := config.BuildTemplateStore(cfg)
+    templates, err := config.BuildTemplateStore(cfg)
+    if err != nil {
+        panic(err)
+    }
 
     registry := engine.NewFunctionRegistry()
     engine.RegisterBuiltins(registry)
@@ -28,7 +31,7 @@ func main() {
 
     root, ok := templates.Get("main")
     if !ok {
-        panic("template main not found")
+        panic("templates")
     }
 
     operations, err := eng.Evaluate(root, "test-output/yaml.txt")

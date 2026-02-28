@@ -1,6 +1,6 @@
 templates:
   main:
     - <- header("Test project")
-    - "Generated with arguments!"
+    - Generated with arguments!
     - <- footer()
     
