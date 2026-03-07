@@ -31,6 +31,9 @@ func main() {
         panic(err)
     }
 
+    for k, v := range graph.Edges {
+    logx.Debug("template %s depends on %v", k, v)
+}
     // ===============================
     // дальше всё как было
     // ===============================

@@ -1,0 +1,9 @@
+templates:
+  main:
+    - <- a
+
+  a:
+    - <- b
+
+  b:
+    - <- main
