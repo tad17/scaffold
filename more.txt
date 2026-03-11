@@ -1,0 +1,321 @@
+Хорошо. Давай сделаем **чёткий следующий шаг в архитектуре**: введём **AST-узлы для операций файловой системы** и простой **executor**. Это превратит текущий DSL-парсер в **реально работающий scaffold-движок**.
+
+Я предложу минимальную архитектуру, которая легко расширяется.
+
+---
+
+# 1. Цель следующего шага
+
+После YAML и DSL парсинга у тебя должен получаться **AST**:
+
+```text
+Script
+ ├── MkdirNode
+ ├── TemplateNode
+ ├── CopyNode
+ └── IncludeNode
+```
+
+Executor просто проходит по списку и выполняет операции.
+
+Pipeline станет таким:
+
+```text
+YAML
+  ↓
+DSL parser
+  ↓
+AST (nodes)
+  ↓
+executor
+  ↓
+filesystem
+```
+
+---
+
+# 2. Общий интерфейс узла DSL
+
+Сначала нужен общий интерфейс.
+
+```go
+type Node interface {
+    Execute(ctx *Context) error
+}
+```
+
+Context хранит:
+
+```go
+type Context struct {
+    WorkDir string
+    Vars    map[string]string
+}
+```
+
+---
+
+# 3. Узел mkdir
+
+```go
+type MkdirNode struct {
+    Path string
+}
+
+func (n *MkdirNode) Execute(ctx *Context) error {
+    p := filepath.Join(ctx.WorkDir, n.Path)
+    return os.MkdirAll(p, 0755)
+}
+```
+
+DSL:
+
+```yaml
+- mkdir: cmd/server
+```
+
+---
+
+# 4. Узел copy
+
+```go
+type CopyNode struct {
+    Src string
+    Dst string
+}
+
+func (n *CopyNode) Execute(ctx *Context) error {
+
+    src := filepath.Join(ctx.WorkDir, n.Src)
+    dst := filepath.Join(ctx.WorkDir, n.Dst)
+
+    data, err := os.ReadFile(src)
+    if err != nil {
+        return err
+    }
+
+    return os.WriteFile(dst, data, 0644)
+}
+```
+
+DSL:
+
+```yaml
+- copy:
+    src: templates/gitignore
+    dst: .gitignore
+```
+
+---
+
+# 5. Узел template
+
+Пока можно сделать простой вариант через `text/template`.
+
+```go
+type TemplateNode struct {
+    Src string
+    Dst string
+}
+
+func (n *TemplateNode) Execute(ctx *Context) error {
+
+    src := filepath.Join(ctx.WorkDir, n.Src)
+    dst := filepath.Join(ctx.WorkDir, n.Dst)
+
+    tplData, err := os.ReadFile(src)
+    if err != nil {
+        return err
+    }
+
+    tpl, err := template.New("tpl").Parse(string(tplData))
+    if err != nil {
+        return err
+    }
+
+    f, err := os.Create(dst)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    return tpl.Execute(f, ctx.Vars)
+}
+```
+
+DSL:
+
+```yaml
+- template:
+    src: main.go.tpl
+    dst: cmd/app/main.go
+```
+
+---
+
+# 6. Executor
+
+Теперь очень простой executor:
+
+```go
+type Executor struct {
+    Nodes []Node
+}
+
+func (e *Executor) Run(ctx *Context) error {
+
+    for _, n := range e.Nodes {
+
+        if err := n.Execute(ctx); err != nil {
+            return err
+        }
+
+    }
+
+    return nil
+}
+```
+
+---
+
+# 7. Parser должен создавать Node
+
+Пример:
+
+```go
+switch step.Type {
+
+case "mkdir":
+
+    nodes = append(nodes, &MkdirNode{
+        Path: step.Path,
+    })
+
+case "copy":
+
+    nodes = append(nodes, &CopyNode{
+        Src: step.Src,
+        Dst: step.Dst,
+    })
+
+}
+```
+
+---
+
+# 8. Пример полного YAML
+
+```yaml
+vars:
+  project: demo
+
+steps:
+
+  - mkdir: cmd/app
+
+  - template:
+      src: templates/main.go.tpl
+      dst: cmd/app/main.go
+
+  - copy:
+      src: templates/gitignore
+      dst: .gitignore
+```
+
+---
+
+# 9. main.go pipeline
+
+В итоге main будет очень простой:
+
+```go
+config := loadConfig()
+
+nodes := parser.Parse(config)
+
+ctx := &exec.Context{
+    WorkDir: ".",
+    Vars:    config.Vars,
+}
+
+executor := exec.Executor{
+    Nodes: nodes,
+}
+
+err := executor.Run(ctx)
+```
+
+---
+
+# 10. Следующий шаг после этого
+
+Когда это заработает, можно добавить:
+
+### include
+
+```yaml
+- include: go-api.yaml
+```
+
+---
+
+### conditions
+
+```yaml
+- if: useDocker
+  then:
+    - template: Dockerfile
+```
+
+---
+
+### prompts
+
+```yaml
+vars:
+  project:
+    prompt: "Project name"
+```
+
+---
+
+# 11. Очень важный момент архитектуры
+
+Не смешивай:
+
+```text
+parser
+executor
+filesystem
+```
+
+Это три разных слоя.
+
+---
+
+# 12. Что сделать прямо сейчас (конкретный план)
+
+Следующий коммит:
+
+```
+feat: add filesystem DSL nodes (mkdir, copy, template)
+```
+
+Файлы:
+
+```
+internal/exec/nodes_mkdir.go
+internal/exec/nodes_copy.go
+internal/exec/nodes_template.go
+internal/exec/executor.go
+```
+
+---
+
+Если хочешь, дальше я покажу **очень важную вещь**, которая резко улучшит архитектуру:
+
+**Node registry + DSL dispatcher**
+
+Она позволит добавлять новые DSL команды **без изменения parser**. 
+Это реально делает движок в 3 раза проще расширять.
+
